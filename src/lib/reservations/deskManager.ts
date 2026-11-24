@@ -1,13 +1,9 @@
-
 import crypto from "crypto";
-import { calculateDistanceMeters, Coordinates } from "../geo/geofence";
-
 import {
   calculateDistanceMeters,
   Coordinates,
   GEOFENCE_RADIUS_METERS,
 } from "../geo/geofence";
-
 import { prisma } from "@/lib/prisma";
 
 // SSE clients broadcaster registry

@@ -44,6 +44,12 @@ jest.mock("@/lib/ssrfValidation", () => ({
   isSafeWebhookUrl: jest.fn(async () => ({ isSafe: true })),
 }));
 
+// Occupancy headcount tests verify exact counts without differential privacy noise.
+jest.mock("@/lib/privacy/differentialPrivacy", () => ({
+  applyPrivacyFilter: jest.fn((count: number) => count),
+  generateLaplaceNoise: jest.fn(() => 0),
+}));
+
 // Side-effect subscribers (email, chat integrations) are not under test here.
 jest.mock("@/core/subscribers/booking", () => ({}));
 jest.mock("@/core/subscribers/discord", () => ({}));
@@ -505,7 +511,12 @@ describeIfDb("core flows (real database)", () => {
         );
 
         expect(results).toEqual([
-          { endpointId: endpoint.id, status: "SUCCESS", statusCode: 204 },
+          {
+            channel: "webhook",
+            endpointId: endpoint.id,
+            status: "SUCCESS",
+            statusCode: 204,
+          },
         ]);
         expect(received).toHaveLength(1);
         const { headers, body } = received[0];
