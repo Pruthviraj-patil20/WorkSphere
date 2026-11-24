@@ -46,13 +46,12 @@ export default class AgentMonitorRoom implements Party.Server {
 
   constructor(
     room: Party.Room,
-    options?: { heartbeatTimeoutMs?: number; purgeTimeoutMs?: number }
+    options?: { heartbeatTimeoutMs?: number; purgeTimeoutMs?: number },
   ) {
     this.room = room;
     this.heartbeatTimeoutMs =
       options?.heartbeatTimeoutMs ?? DEFAULT_AGENT_HEARTBEAT_TIMEOUT_MS;
-    this.purgeTimeoutMs =
-      options?.purgeTimeoutMs ?? DEFAULT_AGENT_PURGE_TTL_MS;
+    this.purgeTimeoutMs = options?.purgeTimeoutMs ?? DEFAULT_AGENT_PURGE_TTL_MS;
   }
 
   /**
@@ -83,7 +82,7 @@ export default class AgentMonitorRoom implements Party.Server {
           JSON.stringify({
             type: "AGENT_PURGED",
             payload: { agentId },
-          })
+          }),
         );
       } else if (
         age > this.heartbeatTimeoutMs &&
@@ -97,7 +96,7 @@ export default class AgentMonitorRoom implements Party.Server {
           JSON.stringify({
             type: "AGENT_HEARTBEAT_UPDATE",
             payload: heartbeat,
-          })
+          }),
         );
       }
     }
@@ -105,7 +104,10 @@ export default class AgentMonitorRoom implements Party.Server {
     return { expired, purged };
   }
 
-  async onConnect(conn: Party.Connection<AgentConnectionState>, ctx: Party.ConnectionContext) {
+  async onConnect(
+    conn: Party.Connection<AgentConnectionState>,
+    ctx: Party.ConnectionContext,
+  ) {
     // If request contains an auth token, perform asynchronous authentication handshake
     if (ctx?.request?.url) {
       try {
@@ -132,7 +134,7 @@ export default class AgentMonitorRoom implements Party.Server {
             this.connectionToAgentMap.set(conn.id, queryAgentId);
           }
         }
-      } catch (_err) {
+      } catch {
         conn.close(4001, "Unauthorized: Token verification failed");
         return;
       }
@@ -154,7 +156,7 @@ export default class AgentMonitorRoom implements Party.Server {
           agents: currentStates,
           connectedClients: Array.from(this.room.getConnections()).length,
         },
-      })
+      }),
     );
   }
 
@@ -177,7 +179,7 @@ export default class AgentMonitorRoom implements Party.Server {
           JSON.stringify({
             type: "AGENT_HEARTBEAT_UPDATE",
             payload: heartbeat,
-          })
+          }),
         );
       } else if (data.type === "UNSUBSCRIBE") {
         const targetAgentId =
@@ -194,7 +196,7 @@ export default class AgentMonitorRoom implements Party.Server {
             JSON.stringify({
               type: "AGENT_HEARTBEAT_UPDATE",
               payload: existing,
-            })
+            }),
           );
         }
 
@@ -205,15 +207,15 @@ export default class AgentMonitorRoom implements Party.Server {
           JSON.stringify({
             type: "PRUNE_RESULT",
             payload: result,
-          })
+          }),
         );
       }
-    } catch (err) {
+    } catch {
       sender.send(
         JSON.stringify({
           type: "ERROR",
           message: "Invalid message payload format",
-        })
+        }),
       );
     }
   }
@@ -236,7 +238,7 @@ export default class AgentMonitorRoom implements Party.Server {
           JSON.stringify({
             type: "AGENT_HEARTBEAT_UPDATE",
             payload: agentRecord,
-          })
+          }),
         );
       }
     }
@@ -248,7 +250,7 @@ export default class AgentMonitorRoom implements Party.Server {
         payload: {
           connectedClients: Array.from(this.room.getConnections()).length,
         },
-      })
+      }),
     );
   }
 }

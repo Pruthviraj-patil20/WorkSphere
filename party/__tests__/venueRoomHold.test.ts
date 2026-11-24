@@ -1,7 +1,4 @@
-import VenueRoom, {
-  DEFAULT_SEAT_HOLD_TTL_MS,
-  type SeatCheckin,
-} from "../venueRoom";
+import VenueRoom from "../venueRoom";
 import type * as Party from "partykit/server";
 
 describe("VenueRoom Seat Hold Locks, Conflict Resolution & TTL Expiration (#7924)", () => {
@@ -49,7 +46,7 @@ describe("VenueRoom Seat Hold Locks, Conflict Resolution & TTL Expiration (#7924
           userId: "user-alice",
           userName: "Alice",
         }),
-        mockConn1
+        mockConn1,
       );
 
       expect(server.getSequenceId()).toBe(1);
@@ -79,7 +76,7 @@ describe("VenueRoom Seat Hold Locks, Conflict Resolution & TTL Expiration (#7924
           seatId: "seat-desk-1",
           userId: "user-alice",
         }),
-        mockConn1
+        mockConn1,
       );
 
       // Bob tries to hold the same seat
@@ -89,11 +86,13 @@ describe("VenueRoom Seat Hold Locks, Conflict Resolution & TTL Expiration (#7924
           seatId: "seat-desk-1",
           userId: "user-bob",
         }),
-        mockConn2
+        mockConn2,
       );
 
       expect(mockConn2.send).toHaveBeenCalledTimes(1);
-      const conflictMsg = JSON.parse((mockConn2.send as jest.Mock).mock.calls[0][0]);
+      const conflictMsg = JSON.parse(
+        (mockConn2.send as jest.Mock).mock.calls[0][0],
+      );
       expect(conflictMsg.type).toBe("seat_conflict");
       expect(conflictMsg.reason).toBe("ALREADY_HELD");
       expect(conflictMsg.seatId).toBe("seat-desk-1");
@@ -106,7 +105,7 @@ describe("VenueRoom Seat Hold Locks, Conflict Resolution & TTL Expiration (#7924
           seatId: "seat-desk-1",
           userId: "user-alice",
         }),
-        mockConn1
+        mockConn1,
       );
 
       // Bob attempts to check into Alice's held seat
@@ -116,11 +115,13 @@ describe("VenueRoom Seat Hold Locks, Conflict Resolution & TTL Expiration (#7924
           seatId: "seat-desk-1",
           userId: "user-bob",
         }),
-        mockConn2
+        mockConn2,
       );
 
       expect(mockConn2.send).toHaveBeenCalledTimes(1);
-      const conflictMsg = JSON.parse((mockConn2.send as jest.Mock).mock.calls[0][0]);
+      const conflictMsg = JSON.parse(
+        (mockConn2.send as jest.Mock).mock.calls[0][0],
+      );
       expect(conflictMsg.type).toBe("seat_conflict");
       expect(conflictMsg.reason).toBe("ALREADY_HELD");
     });
@@ -133,7 +134,7 @@ describe("VenueRoom Seat Hold Locks, Conflict Resolution & TTL Expiration (#7924
           userId: "user-alice",
           userName: "Alice",
         }),
-        mockConn1
+        mockConn1,
       );
 
       // Alice confirms check-in
@@ -144,7 +145,7 @@ describe("VenueRoom Seat Hold Locks, Conflict Resolution & TTL Expiration (#7924
           userId: "user-alice",
           userName: "Alice",
         }),
-        mockConn1
+        mockConn1,
       );
 
       expect(server.getSequenceId()).toBe(2);
@@ -159,7 +160,7 @@ describe("VenueRoom Seat Hold Locks, Conflict Resolution & TTL Expiration (#7924
           seatId: "seat-desk-1",
           userId: "user-alice",
         }),
-        mockConn1
+        mockConn1,
       );
 
       await server.onMessage(
@@ -168,13 +169,15 @@ describe("VenueRoom Seat Hold Locks, Conflict Resolution & TTL Expiration (#7924
           seatId: "seat-desk-1",
           userId: "user-alice",
         }),
-        mockConn1
+        mockConn1,
       );
 
       expect(server.getActiveSeatHolds()).toHaveLength(0);
       expect(server.getSeats()[0].status).toBe("AVAILABLE");
 
-      const lastBroadcast = JSON.parse(broadcastedMessages[broadcastedMessages.length - 1]);
+      const lastBroadcast = JSON.parse(
+        broadcastedMessages[broadcastedMessages.length - 1],
+      );
       expect(lastBroadcast.event.type).toBe("seat_release");
       expect(lastBroadcast.event.seat.status).toBe("AVAILABLE");
     });
@@ -190,7 +193,7 @@ describe("VenueRoom Seat Hold Locks, Conflict Resolution & TTL Expiration (#7924
           userId: "user-alice",
           ttlMs: 3000,
         }),
-        mockConn1
+        mockConn1,
       );
 
       expect(server.getActiveSeatHolds()).toHaveLength(1);
@@ -209,7 +212,7 @@ describe("VenueRoom Seat Hold Locks, Conflict Resolution & TTL Expiration (#7924
           seatId: "seat-desk-closing",
           userId: "user-alice",
         }),
-        mockConn1
+        mockConn1,
       );
 
       expect(server.getActiveSeatHolds()).toHaveLength(1);
@@ -219,7 +222,9 @@ describe("VenueRoom Seat Hold Locks, Conflict Resolution & TTL Expiration (#7924
 
       expect(server.getActiveSeatHolds()).toHaveLength(0);
       expect(server.getSeats()[0].status).toBe("AVAILABLE");
-      const lastBroadcast = JSON.parse(broadcastedMessages[broadcastedMessages.length - 1]);
+      const lastBroadcast = JSON.parse(
+        broadcastedMessages[broadcastedMessages.length - 1],
+      );
       expect(lastBroadcast.event.type).toBe("seat_release");
     });
   });
