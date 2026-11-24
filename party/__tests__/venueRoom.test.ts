@@ -1,7 +1,7 @@
-import VenueRoom, { type SeatCheckin } from '../venueRoom';
-import type * as Party from 'partykit/server';
+import VenueRoom from "../venueRoom";
+import type * as Party from "partykit/server";
 
-describe('VenueRoom PartyKit Server (#7168)', () => {
+describe("VenueRoom PartyKit Server (#7168)", () => {
   let mockRoom: Party.Room;
   let mockConn: Party.Connection;
   let server: VenueRoom;
@@ -11,13 +11,13 @@ describe('VenueRoom PartyKit Server (#7168)', () => {
     broadcastedMessages = [];
 
     mockConn = {
-      id: 'conn-1',
+      id: "conn-1",
       send: jest.fn(),
       close: jest.fn(),
     } as unknown as Party.Connection;
 
     mockRoom = {
-      id: 'venue-101',
+      id: "venue-101",
       broadcast: jest.fn((msg: string) => {
         broadcastedMessages.push(msg);
       }),
@@ -26,47 +26,49 @@ describe('VenueRoom PartyKit Server (#7168)', () => {
     server = new VenueRoom(mockRoom);
   });
 
-  describe('Connection Lifecycle', () => {
-    it('sends initial seat snapshot on fresh connect', async () => {
+  describe("Connection Lifecycle", () => {
+    it("sends initial seat snapshot on fresh connect", async () => {
       const mockCtx = {
         request: {
-          url: 'https://worksphere.partykit.dev/parties/venueRoom/venue-101',
+          url: "https://worksphere.partykit.dev/parties/venueRoom/venue-101",
         },
       } as unknown as Party.ConnectionContext;
 
       await server.onConnect(mockConn, mockCtx);
 
       expect(mockConn.send).toHaveBeenCalledTimes(1);
-      const snapshot = JSON.parse((mockConn.send as jest.Mock).mock.calls[0][0]);
-      expect(snapshot.type).toBe('seat_snapshot');
+      const snapshot = JSON.parse(
+        (mockConn.send as jest.Mock).mock.calls[0][0],
+      );
+      expect(snapshot.type).toBe("seat_snapshot");
       expect(snapshot.sequenceId).toBe(0);
       expect(snapshot.seats).toEqual([]);
     });
 
-    it('triggers sync replay on connect if lastSeq is present in query parameters', async () => {
+    it("triggers sync replay on connect if lastSeq is present in query parameters", async () => {
       // 1. First record checkin events
       await server.onMessage(
         JSON.stringify({
-          type: 'seat_checkin',
-          seatId: 'seat-1',
-          userId: 'user-1',
+          type: "seat_checkin",
+          seatId: "seat-1",
+          userId: "user-1",
         }),
-        mockConn
+        mockConn,
       );
       await server.onMessage(
         JSON.stringify({
-          type: 'seat_checkin',
-          seatId: 'seat-2',
-          userId: 'user-2',
+          type: "seat_checkin",
+          seatId: "seat-2",
+          userId: "user-2",
         }),
-        mockConn
+        mockConn,
       );
 
       expect(server.getSequenceId()).toBe(2);
 
       // 2. Client reconnects with lastSeq = 1
       const reconnectConn = {
-        id: 'conn-reconnect',
+        id: "conn-reconnect",
         send: jest.fn(),
       } as unknown as Party.Connection;
 
@@ -79,95 +81,97 @@ describe('VenueRoom PartyKit Server (#7168)', () => {
       await server.onConnect(reconnectConn, mockCtx);
 
       expect(reconnectConn.send).toHaveBeenCalledTimes(1);
-      const reply = JSON.parse((reconnectConn.send as jest.Mock).mock.calls[0][0]);
-      expect(reply.type).toBe('sync_replay');
+      const reply = JSON.parse(
+        (reconnectConn.send as jest.Mock).mock.calls[0][0],
+      );
+      expect(reply.type).toBe("sync_replay");
       expect(reply.fromSeq).toBe(2);
       expect(reply.toSeq).toBe(2);
       expect(reply.events).toHaveLength(1);
-      expect(reply.events[0].seat.seatId).toBe('seat-2');
+      expect(reply.events[0].seat.seatId).toBe("seat-2");
     });
   });
 
-  describe('Seat Check-in and Check-out Events', () => {
-    it('increments CRDT sequenceId and broadcasts seat update', async () => {
+  describe("Seat Check-in and Check-out Events", () => {
+    it("increments CRDT sequenceId and broadcasts seat update", async () => {
       await server.onMessage(
         JSON.stringify({
-          type: 'seat_checkin',
-          seatId: 'desk-A',
-          userId: 'user-nomad',
-          userName: 'Alex',
+          type: "seat_checkin",
+          seatId: "desk-A",
+          userId: "user-nomad",
+          userName: "Alex",
         }),
-        mockConn
+        mockConn,
       );
 
       expect(server.getSequenceId()).toBe(1);
       expect(broadcastedMessages).toHaveLength(1);
 
       const broadcast = JSON.parse(broadcastedMessages[0]);
-      expect(broadcast.type).toBe('seat_update');
+      expect(broadcast.type).toBe("seat_update");
       expect(broadcast.sequenceId).toBe(1);
-      expect(broadcast.event.seat.seatId).toBe('desk-A');
-      expect(broadcast.event.seat.status).toBe('OCCUPIED');
+      expect(broadcast.event.seat.seatId).toBe("desk-A");
+      expect(broadcast.event.seat.status).toBe("OCCUPIED");
     });
 
-    it('processes seat check-out and marks seat available', async () => {
+    it("processes seat check-out and marks seat available", async () => {
       await server.onMessage(
         JSON.stringify({
-          type: 'seat_checkout',
-          seatId: 'desk-A',
-          userId: 'user-nomad',
+          type: "seat_checkout",
+          seatId: "desk-A",
+          userId: "user-nomad",
         }),
-        mockConn
+        mockConn,
       );
 
       expect(server.getSequenceId()).toBe(1);
       const broadcast = JSON.parse(broadcastedMessages[0]);
-      expect(broadcast.event.seat.status).toBe('AVAILABLE');
+      expect(broadcast.event.seat.status).toBe("AVAILABLE");
     });
   });
 
-  describe('Delta State Synchronization Protocol', () => {
+  describe("Delta State Synchronization Protocol", () => {
     beforeEach(async () => {
       for (let i = 1; i <= 5; i++) {
         await server.onMessage(
           JSON.stringify({
-            type: 'seat_checkin',
+            type: "seat_checkin",
             seatId: `seat-${i}`,
             userId: `user-${i}`,
           }),
-          mockConn
+          mockConn,
         );
       }
     });
 
-    it('returns sync_ack when client is already synchronized', async () => {
+    it("returns sync_ack when client is already synchronized", async () => {
       await server.onMessage(
         JSON.stringify({
-          type: 'sync_request',
+          type: "sync_request",
           lastSeq: 5,
           epoch: server.getEpoch(),
         }),
-        mockConn
+        mockConn,
       );
 
       const reply = JSON.parse((mockConn.send as jest.Mock).mock.calls[0][0]);
-      expect(reply.type).toBe('sync_ack');
-      expect(reply.status).toBe('synchronized');
+      expect(reply.type).toBe("sync_ack");
+      expect(reply.status).toBe("synchronized");
       expect(reply.latestSeq).toBe(5);
     });
 
-    it('returns sync_replay with missed events in sequence order', async () => {
+    it("returns sync_replay with missed events in sequence order", async () => {
       await server.onMessage(
         JSON.stringify({
-          type: 'sync_request',
+          type: "sync_request",
           lastSeq: 3,
           epoch: server.getEpoch(),
         }),
-        mockConn
+        mockConn,
       );
 
       const reply = JSON.parse((mockConn.send as jest.Mock).mock.calls[0][0]);
-      expect(reply.type).toBe('sync_replay');
+      expect(reply.type).toBe("sync_replay");
       expect(reply.fromSeq).toBe(4);
       expect(reply.toSeq).toBe(5);
       expect(reply.events).toHaveLength(2);
@@ -175,19 +179,19 @@ describe('VenueRoom PartyKit Server (#7168)', () => {
       expect(reply.events[1].sequenceId).toBe(5);
     });
 
-    it('returns sync_fallback when client epoch does not match', async () => {
+    it("returns sync_fallback when client epoch does not match", async () => {
       await server.onMessage(
         JSON.stringify({
-          type: 'sync_request',
+          type: "sync_request",
           lastSeq: 2,
           epoch: 999999, // Mismatched epoch
         }),
-        mockConn
+        mockConn,
       );
 
       const reply = JSON.parse((mockConn.send as jest.Mock).mock.calls[0][0]);
-      expect(reply.type).toBe('sync_fallback');
-      expect(reply.reason).toBe('epoch_mismatch');
+      expect(reply.type).toBe("sync_fallback");
+      expect(reply.reason).toBe("epoch_mismatch");
       expect(reply.seats).toHaveLength(5);
     });
   });

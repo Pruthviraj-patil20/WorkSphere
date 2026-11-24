@@ -1,5 +1,8 @@
 import { GraphMemory, GraphNode } from "@/core/agents/memory/GraphMemory";
-import { EmbeddingIndex, VectorDocument } from "@/core/agents/memory/EmbeddingIndex";
+import {
+  EmbeddingIndex,
+  VectorDocument,
+} from "@/core/agents/memory/EmbeddingIndex";
 
 describe("GraphMemory - Idempotent Entity Insertion & Concurrency (#5359)", () => {
   let graphMemory: GraphMemory;
@@ -16,7 +19,10 @@ describe("GraphMemory - Idempotent Entity Insertion & Concurrency (#5359)", () =
     const nodeA: GraphNode = {
       id: "venue-task-1",
       type: "VENUE",
-      properties: { name: "Sightglass Artisan Coffee & Lab", city: "San Francisco" },
+      properties: {
+        name: "Sightglass Artisan Coffee & Lab",
+        city: "San Francisco",
+      },
       createdAt: 1000,
     };
 
@@ -44,7 +50,9 @@ describe("GraphMemory - Idempotent Entity Insertion & Concurrency (#5359)", () =
     const exported = graphMemory.exportGraph();
     // Exactly 1 unique node should exist
     expect(exported.nodes).toHaveLength(1);
-    expect(exported.nodes[0].properties.name).toBe("Sightglass Artisan Coffee & Lab");
+    expect(exported.nodes[0].properties.name).toBe(
+      "Sightglass Artisan Coffee & Lab",
+    );
     // Properties should be merged
     expect(exported.nodes[0].properties.city).toBe("San Francisco");
     expect(exported.nodes[0].properties.rating).toBe(4.8);
@@ -94,7 +102,7 @@ describe("GraphMemory - Idempotent Entity Insertion & Concurrency (#5359)", () =
   });
 
   it("supports insertion locking with withLock", async () => {
-    let executionOrder: number[] = [];
+    const executionOrder: number[] = [];
 
     const task1 = graphMemory.withLock("VENUE:coffee", async () => {
       await new Promise((resolve) => setTimeout(resolve, 50));

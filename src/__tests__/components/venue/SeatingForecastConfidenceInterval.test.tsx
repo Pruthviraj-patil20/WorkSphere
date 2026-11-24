@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 import React from "react";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import {
   SeatingForecastChart,
   SeatingForecastResult,
@@ -9,6 +9,7 @@ import {
 
 // Rich mock for recharts that preserves and renders Tooltip and Area props for assertion
 jest.mock("recharts", () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const React = require("react");
   return {
     ResponsiveContainer: ({ children }: { children: React.ReactNode }) => (
@@ -115,15 +116,21 @@ describe("SeatingForecastChart 95% Confidence Interval & Shading", () => {
       <SeatingForecastChart
         venueId="venue-ci-test"
         initialData={mock7DayForecastData}
-      />
+      />,
     );
 
     // Verify 95% Confidence Band Area element exists with correct props
     const confidenceBand = screen.getByTestId("forecast-confidence-band");
     expect(confidenceBand).toBeInTheDocument();
     expect(confidenceBand).toHaveAttribute("data-datakey", "confidenceBand");
-    expect(confidenceBand).toHaveAttribute("data-name", "95% Confidence Interval");
-    expect(confidenceBand).toHaveAttribute("data-fill", "url(#colorConfidenceBand)");
+    expect(confidenceBand).toHaveAttribute(
+      "data-name",
+      "95% Confidence Interval",
+    );
+    expect(confidenceBand).toHaveAttribute(
+      "data-fill",
+      "url(#colorConfidenceBand)",
+    );
 
     // Verify Point Forecast curve Area exists and is visible above the band
     const forecastCurve = screen.getByTestId("forecast-curve");
@@ -137,7 +144,7 @@ describe("SeatingForecastChart 95% Confidence Interval & Shading", () => {
       <SeatingForecastChart
         venueId="venue-ci-test"
         initialData={mock7DayForecastData}
-      />
+      />,
     );
 
     expect(screen.getByTestId("legend-confidence-band")).toBeInTheDocument();
@@ -150,15 +157,23 @@ describe("SeatingForecastChart 95% Confidence Interval & Shading", () => {
       <SeatingForecastChart
         venueId="venue-ci-test"
         initialData={mock7DayForecastData}
-      />
+      />,
     );
 
     expect(screen.getByTestId("seating-forecast-tooltip")).toBeInTheDocument();
     expect(screen.getByTestId("tooltip-date")).toHaveTextContent("2026-11-09");
-    expect(screen.getByTestId("tooltip-predicted")).toHaveTextContent("30 seats");
-    expect(screen.getByTestId("tooltip-lower-bound")).toHaveTextContent("22 seats");
-    expect(screen.getByTestId("tooltip-upper-bound")).toHaveTextContent("38 seats");
-    expect(screen.getByTestId("tooltip-interval-level")).toHaveTextContent("95%");
+    expect(screen.getByTestId("tooltip-predicted")).toHaveTextContent(
+      "30 seats",
+    );
+    expect(screen.getByTestId("tooltip-lower-bound")).toHaveTextContent(
+      "22 seats",
+    );
+    expect(screen.getByTestId("tooltip-upper-bound")).toHaveTextContent(
+      "38 seats",
+    );
+    expect(screen.getByTestId("tooltip-interval-level")).toHaveTextContent(
+      "95%",
+    );
   });
 
   it("updates confidence band and forecast curve when initialData changes", () => {
@@ -166,7 +181,7 @@ describe("SeatingForecastChart 95% Confidence Interval & Shading", () => {
       <SeatingForecastChart
         venueId="venue-ci-test"
         initialData={mock7DayForecastData}
-      />
+      />,
     );
 
     const initialBand = screen.getByTestId("forecast-confidence-band");
@@ -193,13 +208,19 @@ describe("SeatingForecastChart 95% Confidence Interval & Shading", () => {
       <SeatingForecastChart
         venueId="venue-ci-test"
         initialData={updatedData}
-      />
+      />,
     );
 
     expect(screen.getByTestId("tooltip-date")).toHaveTextContent("2026-11-10");
-    expect(screen.getByTestId("tooltip-predicted")).toHaveTextContent("52 seats");
-    expect(screen.getByTestId("tooltip-lower-bound")).toHaveTextContent("44 seats");
-    expect(screen.getByTestId("tooltip-upper-bound")).toHaveTextContent("60 seats");
+    expect(screen.getByTestId("tooltip-predicted")).toHaveTextContent(
+      "52 seats",
+    );
+    expect(screen.getByTestId("tooltip-lower-bound")).toHaveTextContent(
+      "44 seats",
+    );
+    expect(screen.getByTestId("tooltip-upper-bound")).toHaveTextContent(
+      "60 seats",
+    );
   });
 
   it("renders transition reference marker when both historical and forecast telemetry are provided", () => {
@@ -231,7 +252,7 @@ describe("SeatingForecastChart 95% Confidence Interval & Shading", () => {
       <SeatingForecastChart
         venueId="venue-transition-test"
         initialData={mixedTelemetryData}
-      />
+      />,
     );
 
     const refLine = screen.getByTestId("mock-reference-line");
@@ -264,4 +285,3 @@ describe("SeatingForecastChart 95% Confidence Interval & Shading", () => {
     }
   });
 });
-

@@ -1,8 +1,4 @@
-import AgentMonitorRoom, {
-  AgentHeartbeatPayload,
-  DEFAULT_AGENT_HEARTBEAT_TIMEOUT_MS,
-  DEFAULT_AGENT_PURGE_TTL_MS,
-} from "../agentMonitor.room";
+import AgentMonitorRoom, { AgentHeartbeatPayload } from "../agentMonitor.room";
 import { verifyToken } from "@clerk/backend";
 
 // Mock verifyToken for Clerk JWT authentication
@@ -78,14 +74,14 @@ describe("AgentMonitorRoom PartyKit Server (#7926, #7951)", () => {
 
     await roomInstance.onMessage(
       JSON.stringify({ type: "HEARTBEAT", payload: heartbeat }),
-      mockConnection
+      mockConnection,
     );
 
     mockRoom.broadcast.mockClear();
 
     await roomInstance.onMessage(
       JSON.stringify({ type: "UNSUBSCRIBE", agentId: "agent-008" }),
-      mockConnection
+      mockConnection,
     );
 
     expect(mockRoom.broadcast).toHaveBeenCalledTimes(1);
@@ -103,7 +99,7 @@ describe("AgentMonitorRoom PartyKit Server (#7926, #7951)", () => {
 
     await roomInstance.onMessage(
       JSON.stringify({ type: "HEARTBEAT", payload: heartbeat }),
-      mockConnection
+      mockConnection,
     );
 
     mockRoom.broadcast.mockClear();
@@ -111,8 +107,12 @@ describe("AgentMonitorRoom PartyKit Server (#7926, #7951)", () => {
     await roomInstance.onClose(mockConnection);
 
     expect(mockRoom.broadcast).toHaveBeenCalled();
-    const calls = mockRoom.broadcast.mock.calls.map((c: any) => JSON.parse(c[0]));
-    const stateUpdate = calls.find((c: any) => c.type === "AGENT_HEARTBEAT_UPDATE");
+    const calls = mockRoom.broadcast.mock.calls.map((c: any) =>
+      JSON.parse(c[0]),
+    );
+    const stateUpdate = calls.find(
+      (c: any) => c.type === "AGENT_HEARTBEAT_UPDATE",
+    );
     expect(stateUpdate).toBeDefined();
     expect(stateUpdate.payload.state).toBe("OFFLINE");
   });
@@ -127,11 +127,13 @@ describe("AgentMonitorRoom PartyKit Server (#7926, #7951)", () => {
 
     (roomInstance as any).agentStates.set("agent-stale", heartbeat);
 
-    const { expired, purged } = roomInstance.pruneStaleAgents(now);
+    const { purged } = roomInstance.pruneStaleAgents(now);
     expect(expired).toContain("agent-stale");
     expect(purged).toHaveLength(0);
 
-    const updated = roomInstance.getAgentStates().find((a) => a.agentId === "agent-stale");
+    const updated = roomInstance
+      .getAgentStates()
+      .find((a) => a.agentId === "agent-stale");
     expect(updated?.state).toBe("OFFLINE");
   });
 
@@ -145,7 +147,7 @@ describe("AgentMonitorRoom PartyKit Server (#7926, #7951)", () => {
 
     (roomInstance as any).agentStates.set("agent-dead", heartbeat);
 
-    const { expired, purged } = roomInstance.pruneStaleAgents(now);
+    const { purged } = roomInstance.pruneStaleAgents(now);
     expect(purged).toContain("agent-dead");
     expect(roomInstance.getAgentStates()).toHaveLength(0);
   });
@@ -153,7 +155,7 @@ describe("AgentMonitorRoom PartyKit Server (#7926, #7951)", () => {
   it("handles PRUNE_STALE message and replies with prune summary", async () => {
     await roomInstance.onMessage(
       JSON.stringify({ type: "PRUNE_STALE" }),
-      mockConnection
+      mockConnection,
     );
 
     expect(mockConnection.send).toHaveBeenCalledTimes(1);
@@ -248,13 +250,19 @@ describe("AgentMonitorRoom PartyKit Server (#7926, #7951)", () => {
       await roomInstance.onClose(mockConnection);
 
       // Since the agentId was never mapped to this connection, no AGENT_HEARTBEAT_UPDATE should fire
-      const calls = mockRoom.broadcast.mock.calls.map((c: any) => JSON.parse(c[0]));
-      const agentUpdates = calls.filter((c: any) => c.type === "AGENT_HEARTBEAT_UPDATE");
+      const calls = mockRoom.broadcast.mock.calls.map((c: any) =>
+        JSON.parse(c[0]),
+      );
+      const agentUpdates = calls.filter(
+        (c: any) => c.type === "AGENT_HEARTBEAT_UPDATE",
+      );
       expect(agentUpdates).toHaveLength(0);
     });
 
     it("closes socket with 4001 when token verification rejects", async () => {
-      (verifyToken as jest.Mock).mockRejectedValue(new Error("Invalid or expired token"));
+      (verifyToken as jest.Mock).mockRejectedValue(
+        new Error("Invalid or expired token"),
+      );
 
       const mockCtx: any = {
         request: {
@@ -266,7 +274,7 @@ describe("AgentMonitorRoom PartyKit Server (#7926, #7951)", () => {
 
       expect(mockConnection.close).toHaveBeenCalledWith(
         4001,
-        "Unauthorized: Token verification failed"
+        "Unauthorized: Token verification failed",
       );
       expect(mockConnection.setState).not.toHaveBeenCalled();
       expect(mockConnection.send).not.toHaveBeenCalled();
@@ -278,7 +286,7 @@ describe("AgentMonitorRoom PartyKit Server (#7926, #7951)", () => {
         () =>
           new Promise((resolve) => {
             resolveAuth = resolve;
-          })
+          }),
       );
 
       const mockCtx: any = {

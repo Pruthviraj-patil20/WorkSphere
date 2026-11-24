@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { VenueShareModal } from "@/components/venue/VenueShareModal";
 import * as svgQrModule from "@/lib/qr/svgQr";
 
@@ -9,34 +9,43 @@ jest.mock("@/components/ui/Toast", () => ({
 }));
 
 jest.mock("framer-motion", () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const React = require("react");
+  const MockDiv = React.forwardRef(
+    (
+      {
+        initial: _initial,
+        animate: _animate,
+        exit: _exit,
+        transition: _transition,
+        ...props
+      }: React.HTMLAttributes<HTMLDivElement> & Record<string, unknown>,
+      ref: React.Ref<HTMLDivElement>,
+    ) => <div ref={ref} {...props} />,
+  );
+  MockDiv.displayName = "MockDiv";
+
+  const MockSpan = React.forwardRef(
+    (
+      {
+        initial: _initial,
+        animate: _animate,
+        exit: _exit,
+        transition: _transition,
+        ...props
+      }: React.HTMLAttributes<HTMLSpanElement> & Record<string, unknown>,
+      ref: React.Ref<HTMLSpanElement>,
+    ) => <span ref={ref} {...props} />,
+  );
+  MockSpan.displayName = "MockSpan";
+
   return {
-    AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    AnimatePresence: ({ children }: { children: React.ReactNode }) => (
+      <>{children}</>
+    ),
     motion: {
-      div: React.forwardRef(
-        (
-          {
-            initial: _initial,
-            animate: _animate,
-            exit: _exit,
-            transition: _transition,
-            ...props
-          }: React.HTMLAttributes<HTMLDivElement> & Record<string, unknown>,
-          ref: React.Ref<HTMLDivElement>,
-        ) => <div ref={ref} {...props} />,
-      ),
-      span: React.forwardRef(
-        (
-          {
-            initial: _initial,
-            animate: _animate,
-            exit: _exit,
-            transition: _transition,
-            ...props
-          }: React.HTMLAttributes<HTMLSpanElement> & Record<string, unknown>,
-          ref: React.Ref<HTMLSpanElement>,
-        ) => <span ref={ref} {...props} />,
-      ),
+      div: MockDiv,
+      span: MockSpan,
     },
   };
 });
@@ -161,10 +170,7 @@ describe("VenueShareModal Component (#4402)", () => {
       expect(screen.getByTestId("copy-live-region")).toHaveTextContent(
         "Link copied to clipboard! 🚀",
       );
-      expect(mockToast).toHaveBeenCalledWith(
-        "Copied to clipboard!",
-        "success",
-      );
+      expect(mockToast).toHaveBeenCalledWith("Copied to clipboard!", "success");
     });
   });
 
@@ -173,16 +179,22 @@ describe("VenueShareModal Component (#4402)", () => {
     delete (navigator as any).share;
 
     render(<VenueShareModal venue={mockVenue} />);
-    fireEvent.click(screen.getByRole("button", { name: /share cafe artisan/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /share cafe artisan/i }),
+    );
 
-    const urlInput = screen.getByDisplayValue(/\/venues\/venue-123/) as HTMLInputElement;
+    const urlInput = screen.getByDisplayValue(
+      /\/venues\/venue-123/,
+    ) as HTMLInputElement;
     const copyBtn = screen.getByRole("button", { name: "Copy share link" });
 
     expect(copyBtn).toHaveAttribute("title", "Copy share link");
     fireEvent.click(copyBtn);
 
     await waitFor(() => {
-      expect(navigator.clipboard.writeText).toHaveBeenCalledWith(urlInput.value);
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+        urlInput.value,
+      );
     });
   });
 
@@ -193,7 +205,9 @@ describe("VenueShareModal Component (#4402)", () => {
     const execCommand = document.execCommand as jest.Mock;
 
     render(<VenueShareModal venue={mockVenue} />);
-    fireEvent.click(screen.getByRole("button", { name: /share cafe artisan/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /share cafe artisan/i }),
+    );
     fireEvent.click(screen.getByRole("button", { name: "Copy share link" }));
 
     await waitFor(() => {
@@ -206,12 +220,16 @@ describe("VenueShareModal Component (#4402)", () => {
     // @ts-expect-error - intentional test simulation
     delete (navigator as any).share;
     Object.assign(navigator, {
-      clipboard: { writeText: jest.fn().mockRejectedValue(new Error("Denied")) },
+      clipboard: {
+        writeText: jest.fn().mockRejectedValue(new Error("Denied")),
+      },
     });
     document.execCommand = jest.fn().mockReturnValue(false);
 
     render(<VenueShareModal venue={mockVenue} />);
-    fireEvent.click(screen.getByRole("button", { name: /share cafe artisan/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /share cafe artisan/i }),
+    );
     fireEvent.click(screen.getByRole("button", { name: "Copy share link" }));
 
     await waitFor(() => {
@@ -335,4 +353,3 @@ describe("stacking context and focus (#7613)", () => {
     expect(shareBtn).toHaveFocus();
   });
 });
-

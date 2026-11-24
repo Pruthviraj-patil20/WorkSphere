@@ -1,5 +1,6 @@
 import "@testing-library/jest-dom";
 import React from "react";
+import Link from "next/link";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { KeyboardShortcutsModal } from "@/components/ui/KeyboardShortcutsModal";
 
@@ -9,9 +10,9 @@ function MockAppShell({ currentRoute = "/" }: { currentRoute?: string }) {
     <div>
       <header>
         <nav aria-label="Main Navigation">
-          <a href="/">Home</a>
-          <a href="/venues">Venues</a>
-          <a href="/bookings">Bookings</a>
+          <Link href="/">Home</Link>
+          <Link href="/venues">Venues</Link>
+          <Link href="/bookings">Bookings</Link>
         </nav>
       </header>
       <main id="main-content">
